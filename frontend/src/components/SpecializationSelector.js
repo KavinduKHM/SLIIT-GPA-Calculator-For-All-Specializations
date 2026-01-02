@@ -36,7 +36,8 @@ const SpecializationSelector = ({
     setLoadingModules(true);
     try {
       // Load modules for this specialization
-      const data = await getSpecializationModules(spec.specializationCode);
+      const lookupKey = spec.specializationCode || spec.specializationNamme || spec.name || spec._id;
+      const data = await getSpecializationModules(lookupKey);
       
       setSpecialization(spec);
       setSpecializationModules({
@@ -51,11 +52,20 @@ const SpecializationSelector = ({
     }
   };
 
-  const filteredSpecializations = specializations.filter(spec =>
-    spec.name.toLowerCase().includes(search.toLowerCase()) ||
-    spec.specializationCode.toLowerCase().includes(search.toLowerCase()) ||
-    (spec.description && spec.description.toLowerCase().includes(search.toLowerCase()))
-  );
+  const toSearchable = (value = '') => (typeof value === 'string' ? value.toLowerCase() : '');
+  const searchQuery = toSearchable(search.trim());
+
+  const filteredSpecializations = specializations.filter((spec) => {
+    const name = spec.name || spec.specializationNamme || '';
+    const code = spec.specializationCode || '';
+    const description = spec.description || '';
+
+    return (
+      toSearchable(name).includes(searchQuery) ||
+      toSearchable(code).includes(searchQuery) ||
+      toSearchable(description).includes(searchQuery)
+    );
+  });
 
   if (loading) {
     return (
@@ -99,18 +109,20 @@ const SpecializationSelector = ({
       ) : (
         <div className="specialization-grid">
           {filteredSpecializations.map((spec) => {
+            const code = spec.specializationCode || 'N/A';
+            const name = spec.name || spec.specializationNamme || 'Unnamed Specialization';
             const isSelected = specialization?.specializationCode === spec.specializationCode;
 
             return (
               <div
-                key={spec.specializationCode}
+                key={code}
                 className={`specialization-card ${isSelected ? 'is-selected' : ''}`}
                 onClick={() => handleSelectSpecialization(spec)}
               >
                 <div className="specialization-card__header">
                   <div>
-                    <h3>{spec.name}</h3>
-                    <span className="code">{spec.specializationCode}</span>
+                    <h3>{name}</h3>
+                    <span className="code">{code}</span>
                   </div>
                   {isSelected && <span className="chip success">Selected</span>}
                 </div>

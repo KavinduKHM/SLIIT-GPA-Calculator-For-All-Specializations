@@ -29,7 +29,8 @@ mongoose
 
 // Routes
 app.use('/api/modules', require('./routes/modules'));
-app.use('/api/specializations', require('./routes/calculate'));
+app.use('/api/specializations', require('./routes/specializations'));
+app.use('/api/calculate', require('./routes/calculate'));
 
 
 const PORT = process.env.PORT || 5000;

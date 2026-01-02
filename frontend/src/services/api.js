@@ -50,8 +50,8 @@ api.interceptors.response.use(
 
 // Module API calls
 export const getCommonModules = () => api.get('/modules/common');
-export const getAllSpecializations = () => api.get('/modules/specializations');
-export const getSpecializationModules = (code) => api.get(`/modules/specialization/${code}`);
+export const getAllSpecializations = () => api.get('/specializations');
+export const getSpecializationModules = (code) => api.get(`/specializations/${code}/modules`);
 
 // GPA Calculation API call
 export const calculateGPA = (grades) => api.post('/calculate/gpa', { grades });
