@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GRADE_OPTIONS, GRADE_COLORS } from '../utils/constants';
+import { GRADE_OPTIONS } from '../utils/constants';
 
 const Year3_4 = ({
   specialization,
@@ -14,6 +14,8 @@ const Year3_4 = ({
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortMode, setSortMode] = useState('alphabetical');
 
   // Calculate stats
   const calculateYearStats = (year) => {
@@ -46,7 +48,11 @@ const Year3_4 = ({
         moduleName.toLowerCase().includes(query);
       const semesterValue = Number.isFinite(Number(module.semester)) ? Number(module.semester) : 1;
       const matchesSemester = selectedSemester === 'all' || selectedSemester === semesterValue.toString();
-      return matchesSearch && matchesSemester;
+       const currentGrade = getCurrentGrade(module.moduleCode);
+       const matchesStatus = statusFilter === 'all'
+         || (statusFilter === 'completed' && currentGrade)
+         || (statusFilter === 'pending' && !currentGrade);
+       return matchesSearch && matchesSemester && matchesStatus;
     });
   };
 
@@ -64,8 +70,20 @@ const Year3_4 = ({
     }, {});
   };
 
-  const filteredYear3 = selectedYear === 'all' || selectedYear === '3' ? filterModules(specializationModules.year3) : [];
-  const filteredYear4 = selectedYear === 'all' || selectedYear === '4' ? filterModules(specializationModules.year4) : [];
+  const sortModules = (modules) => {
+    const copy = modules.slice();
+    if (sortMode === 'credits') {
+      return copy.sort((a, b) => (b.credits || 0) - (a.credits || 0));
+    }
+    return copy.sort((a, b) => (a.moduleCode || '').localeCompare(b.moduleCode || ''));
+  };
+
+  const filteredYear3 = selectedYear === 'all' || selectedYear === '3'
+    ? sortModules(filterModules(specializationModules.year3))
+    : [];
+  const filteredYear4 = selectedYear === 'all' || selectedYear === '4'
+    ? sortModules(filterModules(specializationModules.year4))
+    : [];
 
   const toneClasses = (year, semester) => {
     const palette = year === 1 || year === 3 ? 'tone-warm' : 'tone-cool';
@@ -110,19 +128,14 @@ const Year3_4 = ({
         key={`${module.moduleCode}-${gradeYear}-${semester}`}
         className={`module-card ${toneClassNames} ${currentGrade ? 'is-selected' : ''}`}
       >
-        <div className="module-card__header">
-          <div>
+        <div className="module-card__shell">
+          <div className="module-card__header">
             <span className="code">{module.moduleCode}</span>
-            <p>{safeName}</p>
+            <span className="credit-badge" aria-label={creditLabel}>
+              <span aria-hidden="true">◈</span> {module.credits || 0} Credits
+            </span>
           </div>
-          <div className="module-card__badges">
-            <span className="module-badge">Year {gradeYear}</span>
-            <span className="module-badge">Semester {semester}</span>
-          </div>
-        </div>
-
-        <div className="module-card__meta">
-          <span className={`chip ${gradeYear === 3 ? 'info' : 'accent'}`}>{creditLabel}</span>
+          <p className="module-card__title">{safeName}</p>
         </div>
 
         <select
@@ -142,16 +155,16 @@ const Year3_4 = ({
           ))}
         </select>
 
-        {currentGrade && (
-          <div className="module-card__footer">
-            <span className={`chip ${GRADE_COLORS[currentGrade]}`}>
-              Grade {currentGrade}
-            </span>
+        <div className="module-card__footer">
+          <span className={`module-status ${currentGrade ? 'is-complete' : ''}`}>
+            {currentGrade ? 'Completed' : 'Pending'}
+          </span>
+          {currentGrade && (
             <span className="points">
               {GRADE_OPTIONS.find(g => g.value === currentGrade)?.points.toFixed(1)} pts
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     );
   };
@@ -246,11 +259,21 @@ const Year3_4 = ({
           <option value="3">Year 3 Only</option>
           <option value="4">Year 4 Only</option>
         </select>
+         <select
+           value={sortMode}
+           onChange={(e) => setSortMode(e.target.value)}
+           className="filter-select"
+         >
+           <option value="alphabetical">Sort · Code A-Z</option>
+           <option value="credits">Sort · Credits High-Low</option>
+         </select>
         <button
           onClick={() => {
             setSearch('');
             setSelectedYear('all');
             setSelectedSemester('all');
+             setStatusFilter('all');
+             setSortMode('alphabetical');
           }}
           className="pill-button"
         >
@@ -267,6 +290,17 @@ const Year3_4 = ({
             </button>
           ))}
         </div>
+         <div className="filter-pill-group" role="group" aria-label="Completion filter">
+           {['all', 'completed', 'pending'].map((option) => (
+             <button
+               key={option}
+               className={`pill-button filter-pill ${statusFilter === option ? 'is-active' : ''}`}
+               onClick={() => setStatusFilter(option)}
+             >
+               {option === 'all' ? 'All Modules' : option === 'completed' ? 'Completed' : 'Pending'}
+             </button>
+           ))}
+         </div>
       </div>
 
       {renderLegend()}

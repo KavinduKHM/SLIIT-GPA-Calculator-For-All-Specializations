@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getCommonModules } from '../services/api';
-import { GRADE_OPTIONS, GRADE_COLORS } from '../utils/constants';
+import { GRADE_OPTIONS } from '../utils/constants';
 
 const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
   const [modules, setModules] = useState([]);
@@ -9,6 +9,8 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortMode, setSortMode] = useState('alphabetical');
 
   useEffect(() => {
     loadModules();
@@ -36,11 +38,22 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
       module.moduleName.toLowerCase().includes(search.toLowerCase());
     const matchesYear = selectedYear === 'all' || module.year.toString() === selectedYear;
     const matchesSemester = selectedSemester === 'all' || semesterValue.toString() === selectedSemester;
-    return matchesSearch && matchesYear && matchesSemester;
+    const currentGrade = getCurrentGrade(module.moduleCode);
+    const matchesStatus = statusFilter === 'all'
+      || (statusFilter === 'completed' && currentGrade)
+      || (statusFilter === 'pending' && !currentGrade);
+    return matchesSearch && matchesYear && matchesSemester && matchesStatus;
+  });
+
+  const sortedModules = filteredModules.slice().sort((a, b) => {
+    if (sortMode === 'credits') {
+      return (b.credits || 0) - (a.credits || 0);
+    }
+    return (a.moduleCode || '').localeCompare(b.moduleCode || '');
   });
 
   // Group modules by year and semester
-  const groupedModules = filteredModules.reduce((acc, module) => {
+  const groupedModules = sortedModules.reduce((acc, module) => {
     const key = `Year ${module.year} · Semester ${module.semester}`;
     if (!acc[key]) {
       acc[key] = [];
@@ -57,26 +70,8 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
 
   const renderLegend = () => (
     <div className="module-legend">
-      <div className="module-legend__item">
-        <div className="legend-swatch-pair" aria-hidden="true">
-          <span className="legend-swatch tone-warm semester-one"></span>
-          <span className="legend-swatch tone-warm semester-two"></span>
-        </div>
-        <div>
-          <strong>Years 1 &amp; 3</strong>
-          <p>Warm palette · Semester 1 lighter, Semester 2 richer</p>
-        </div>
-      </div>
-      <div className="module-legend__item">
-        <div className="legend-swatch-pair" aria-hidden="true">
-          <span className="legend-swatch tone-cool semester-one"></span>
-          <span className="legend-swatch tone-cool semester-two"></span>
-        </div>
-        <div>
-          <strong>Years 2 &amp; 4</strong>
-          <p>Cool palette · Semester 1 lighter, Semester 2 deeper</p>
-        </div>
-      </div>
+      
+     
     </div>
   );
 
@@ -183,6 +178,14 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
         >
           Clear
         </button>
+        <select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value)}
+          className="filter-select"
+        >
+          <option value="alphabetical">Sort · Code A-Z</option>
+          <option value="credits">Sort · Credits High-Low</option>
+        </select>
         <div className="filter-pill-group" role="group" aria-label="Semester filter">
           {['all', '1', '2'].map((option) => (
             <button
@@ -191,6 +194,17 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
               onClick={() => setSelectedSemester(option)}
             >
               {option === 'all' ? 'All Semesters' : `Semester ${option}`}
+            </button>
+          ))}
+        </div>
+        <div className="filter-pill-group" role="group" aria-label="Completion filter">
+          {['all', 'completed', 'pending'].map((option) => (
+            <button
+              key={option}
+              className={`pill-button filter-pill ${statusFilter === option ? 'is-active' : ''}`}
+              onClick={() => setStatusFilter(option)}
+            >
+              {option === 'all' ? 'All Modules' : option === 'completed' ? 'Completed' : 'Pending'}
             </button>
           ))}
         </div>
@@ -216,19 +230,14 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
                       key={module.moduleCode}
                       className={`module-card ${toneClassNames} ${currentGrade ? 'is-selected' : ''}`}
                     >
-                      <div className="module-card__header">
-                        <div>
+                      <div className="module-card__shell">
+                        <div className="module-card__header">
                           <span className="code">{module.moduleCode}</span>
-                          <p>{module.moduleName}</p>
+                          <span className="credit-badge" aria-label={`${module.credits} credits`}>
+                            <span aria-hidden="true">◈</span> {module.credits} Credits
+                          </span>
                         </div>
-                        <div className="module-card__badges">
-                          <span className="module-badge">Year {module.year}</span>
-                          <span className="module-badge">Semester {semesterValue}</span>
-                        </div>
-                      </div>
-
-                      <div className="module-card__meta">
-                        <span className="chip neutral">{module.credits} credits</span>
+                        <p className="module-card__title">{module.moduleName}</p>
                       </div>
 
                       <select
@@ -246,12 +255,14 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
 
                       {currentGrade && (
                         <div className="module-card__footer">
-                          <span className={`chip ${GRADE_COLORS[currentGrade]}`}>
-                            Grade {currentGrade}
+                          <span className={`module-status ${currentGrade ? 'is-complete' : ''}`}>
+                            {currentGrade ? 'Completed' : 'Pending'}
                           </span>
-                          <span className="points">
-                            {GRADE_OPTIONS.find(g => g.value === currentGrade)?.points.toFixed(1)} pts
-                          </span>
+                          {currentGrade && (
+                            <span className="points">
+                              {GRADE_OPTIONS.find(g => g.value === currentGrade)?.points.toFixed(1)} pts
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

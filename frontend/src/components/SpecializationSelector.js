@@ -32,6 +32,16 @@ const SpecializationSelector = ({
     }
   };
 
+  const formatMetric = (value) =>
+    typeof value === 'number' && !Number.isNaN(value) ? value : '—';
+
+  const handleCardKeyPress = (event, spec) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleSelectSpecialization(spec);
+    }
+  };
+
   const handleSelectSpecialization = async (spec) => {
     setLoadingModules(true);
     try {
@@ -109,33 +119,53 @@ const SpecializationSelector = ({
       ) : (
         <div className="specialization-grid">
           {filteredSpecializations.map((spec) => {
-            const code = spec.specializationCode || 'N/A';
-            const name = spec.specializationName || 'Unnamed Specialization';
+            const code = (spec.specializationCode || spec.code || 'N/A').toUpperCase();
+            const name = spec.specializationName || spec.name || 'Unnamed Specialization';
+            const programmeLine = spec.programme || spec.programmeName || spec.programTitle || '';
+            const summary = spec.description || spec.summary || 'No description available.';
+            const year3Count = spec.year3Modules?.length ?? spec.year3Count ?? 0;
+            const year4Count = spec.year4Modules?.length ?? spec.year4Count ?? 0;
+            const minYear3 = formatMetric(spec.minCreditsYear3);
+            const minYear4 = formatMetric(spec.minCreditsYear4);
             const isSelected = specialization?.specializationCode === spec.specializationCode;
 
             return (
               <div
-                key={name}
+                key={code || name}
                 className={`specialization-card ${isSelected ? 'is-selected' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`Select the ${name} specialization`}
                 onClick={() => handleSelectSpecialization(spec)}
+                onKeyDown={(event) => handleCardKeyPress(event, spec)}
               >
-                <div className="specialization-card__header">
-                  <div>
+                <div className="specialization-card__head">
+                  <div className="specialization-card__identity">
+                    
                     <h3>{name}</h3>
-                    <span className="code">{code}</span>
                   </div>
-                  {isSelected && <span className="chip success">Selected</span>}
+                  <span className="code-badge" aria-hidden="true">{code}</span>
                 </div>
-                <p className="description">
-                  {spec.description || 'No description available.'}
-                </p>
-                <div className="specialization-card__meta">
-                  <span>📚 Year 3: {spec.year3Modules?.length || 0}</span>
-                  <span>🎓 Year 4: {spec.year4Modules?.length || 0}</span>
+
+                {programmeLine && (
+                  <p className="specialization-card__program">{programmeLine}</p>
+                )}
+
+                <p className="specialization-card__description">{summary}</p>
+
+                <div className="specialization-card__stats-grid">
+                  <div className="specialization-stat">
+                    <span className="stat-label">Year 3 modules</span>
+                    <span className="stat-value">{year3Count}</span>
+                  </div>
+                  <div className="specialization-stat">
+                    <span className="stat-label">Year 4 modules</span>
+                    <span className="stat-value">{year4Count}</span>
+                  </div>
                 </div>
-                <div className="specialization-card__foot">
-                  Min credits Y3 ({spec.minCreditsYear3}) · Y4 ({spec.minCreditsYear4})
-                </div>
+
+               
               </div>
             );
           })}

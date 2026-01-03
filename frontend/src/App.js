@@ -14,6 +14,7 @@ function App() {
     year3: [],
     year4: []
   });
+  const [theme, setTheme] = useState(() => localStorage.getItem('gpaTheme') || 'light');
 
   // Load saved state from localStorage
   useEffect(() => {
@@ -49,6 +50,11 @@ function App() {
     localStorage.setItem('gpaCalculatorState', JSON.stringify(state));
   }, [grades, specialization, specializationModules, currentStep]);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('gpaTheme', theme);
+  }, [theme]);
+
   // Update grade handler
   const updateGrade = (moduleCode, grade, moduleData) => {
     setGrades(prev => {
@@ -69,6 +75,14 @@ function App() {
       
       return filtered;
     });
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const exportWorkspace = () => {
+    window.print();
   };
 
   // Get current grade for a module
@@ -106,6 +120,15 @@ function App() {
           <p className="app-subtitle">Track CGPA and WGPA progress across all four academic years.</p>
         </header>
 
+        <div className="utility-toolbar" aria-label="Workspace actions">
+          <button className="pill-button" onClick={toggleTheme}>
+            {theme === 'light' ? 'Enable Dark Mode' : 'Enable Light Mode'}
+          </button>
+          <button className="pill-button" onClick={exportWorkspace}>
+            Export / Print Snapshot
+          </button>
+        </div>
+
         <Navigation
           currentStep={currentStep}
           goToStep={goToStep}
@@ -125,9 +148,14 @@ function App() {
                 <span className="stat-label">Specialization</span>
               </div>
             </div>
-            <button onClick={resetCalculator} className="reset-button">
-              Reset Workspace
-            </button>
+            <div className="stats-actions">
+              <button onClick={exportWorkspace} className="reset-button" aria-label="Export workspace">
+                Export Snapshot
+              </button>
+              <button onClick={resetCalculator} className="reset-button" aria-label="Reset workspace">
+                Reset Workspace
+              </button>
+            </div>
           </div>
         )}
 
