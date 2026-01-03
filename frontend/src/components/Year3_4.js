@@ -13,6 +13,7 @@ const Year3_4 = ({
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedSemester, setSelectedSemester] = useState('all');
 
   // Calculate stats
   const calculateYearStats = (year) => {
@@ -43,7 +44,9 @@ const Year3_4 = ({
       const matchesSearch = search === '' || 
         moduleCode.toLowerCase().includes(query) ||
         moduleName.toLowerCase().includes(query);
-      return matchesSearch;
+      const semesterValue = Number.isFinite(Number(module.semester)) ? Number(module.semester) : 1;
+      const matchesSemester = selectedSemester === 'all' || selectedSemester === semesterValue.toString();
+      return matchesSearch && matchesSemester;
     });
   };
 
@@ -64,22 +67,61 @@ const Year3_4 = ({
   const filteredYear3 = selectedYear === 'all' || selectedYear === '3' ? filterModules(specializationModules.year3) : [];
   const filteredYear4 = selectedYear === 'all' || selectedYear === '4' ? filterModules(specializationModules.year4) : [];
 
+  const toneClasses = (year, semester) => {
+    const palette = year === 1 || year === 3 ? 'tone-warm' : 'tone-cool';
+    const semesterClass = semester === 2 ? 'semester-two' : 'semester-one';
+    return `${palette} ${semesterClass}`;
+  };
+
+  const renderLegend = () => (
+    <div className="module-legend">
+      <div className="module-legend__item">
+        <div className="legend-swatch-pair" aria-hidden="true">
+          <span className="legend-swatch tone-warm semester-one"></span>
+          <span className="legend-swatch tone-warm semester-two"></span>
+        </div>
+        <div>
+          <strong>Years 1 &amp; 3</strong>
+          <p>Warm oranges · Semester 1 lighter, Semester 2 deeper</p>
+        </div>
+      </div>
+      <div className="module-legend__item">
+        <div className="legend-swatch-pair" aria-hidden="true">
+          <span className="legend-swatch tone-cool semester-one"></span>
+          <span className="legend-swatch tone-cool semester-two"></span>
+        </div>
+        <div>
+          <strong>Years 2 &amp; 4</strong>
+          <p>Cool blues/teals · Semester shading follows the same pattern</p>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderModuleCard = (module, gradeYear) => {
     const currentGrade = getCurrentGrade(module.moduleCode);
     const safeName = module.moduleName || module.moduleCode;
     const creditLabel = module.credits ? `${module.credits} credits` : 'Credits not set';
-    const semester = Number.isFinite(module.semester) ? module.semester : 1;
+    const semester = Number.isFinite(Number(module.semester)) ? Number(module.semester) : 1;
+    const toneClassNames = toneClasses(gradeYear, semester);
 
     return (
       <div
         key={`${module.moduleCode}-${gradeYear}-${semester}`}
-        className={`module-card ${currentGrade ? 'is-selected' : ''}`}
+        className={`module-card ${toneClassNames} ${currentGrade ? 'is-selected' : ''}`}
       >
         <div className="module-card__header">
           <div>
             <span className="code">{module.moduleCode}</span>
             <p>{safeName}</p>
           </div>
+          <div className="module-card__badges">
+            <span className="module-badge">Year {gradeYear}</span>
+            <span className="module-badge">Semester {semester}</span>
+          </div>
+        </div>
+
+        <div className="module-card__meta">
           <span className={`chip ${gradeYear === 3 ? 'info' : 'accent'}`}>{creditLabel}</span>
         </div>
 
@@ -208,12 +250,26 @@ const Year3_4 = ({
           onClick={() => {
             setSearch('');
             setSelectedYear('all');
+            setSelectedSemester('all');
           }}
           className="pill-button"
         >
           Clear
         </button>
+        <div className="filter-pill-group" role="group" aria-label="Semester filter">
+          {['all', '1', '2'].map((option) => (
+            <button
+              key={option}
+              className={`pill-button filter-pill ${selectedSemester === option ? 'is-active' : ''}`}
+              onClick={() => setSelectedSemester(option)}
+            >
+              {option === 'all' ? 'All Semesters' : `Semester ${option}`}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {renderLegend()}
 
       {/* Modules List */}
       <div className="module-groups">

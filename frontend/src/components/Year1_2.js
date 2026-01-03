@@ -8,6 +8,7 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedSemester, setSelectedSemester] = useState('all');
 
   useEffect(() => {
     loadModules();
@@ -29,22 +30,55 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
 
   // Filter modules based on search and year
   const filteredModules = modules.filter(module => {
+    const semesterValue = Number.isFinite(Number(module.semester)) ? Number(module.semester) : 1;
     const matchesSearch = search === '' || 
       module.moduleCode.toLowerCase().includes(search.toLowerCase()) ||
       module.moduleName.toLowerCase().includes(search.toLowerCase());
     const matchesYear = selectedYear === 'all' || module.year.toString() === selectedYear;
-    return matchesSearch && matchesYear;
+    const matchesSemester = selectedSemester === 'all' || semesterValue.toString() === selectedSemester;
+    return matchesSearch && matchesYear && matchesSemester;
   });
 
   // Group modules by year and semester
   const groupedModules = filteredModules.reduce((acc, module) => {
-    const key = `Year ${module.year} - Semester ${module.semester}`;
+    const key = `Year ${module.year} · Semester ${module.semester}`;
     if (!acc[key]) {
       acc[key] = [];
     }
     acc[key].push(module);
     return acc;
   }, {});
+
+  const toneClasses = (year, semester) => {
+    const palette = year === 1 || year === 3 ? 'tone-warm' : 'tone-cool';
+    const semesterClass = semester === 2 ? 'semester-two' : 'semester-one';
+    return `${palette} ${semesterClass}`;
+  };
+
+  const renderLegend = () => (
+    <div className="module-legend">
+      <div className="module-legend__item">
+        <div className="legend-swatch-pair" aria-hidden="true">
+          <span className="legend-swatch tone-warm semester-one"></span>
+          <span className="legend-swatch tone-warm semester-two"></span>
+        </div>
+        <div>
+          <strong>Years 1 &amp; 3</strong>
+          <p>Warm palette · Semester 1 lighter, Semester 2 richer</p>
+        </div>
+      </div>
+      <div className="module-legend__item">
+        <div className="legend-swatch-pair" aria-hidden="true">
+          <span className="legend-swatch tone-cool semester-one"></span>
+          <span className="legend-swatch tone-cool semester-two"></span>
+        </div>
+        <div>
+          <strong>Years 2 &amp; 4</strong>
+          <p>Cool palette · Semester 1 lighter, Semester 2 deeper</p>
+        </div>
+      </div>
+    </div>
+  );
 
   // Calculate stats
   const calculateStats = (year) => {
@@ -149,7 +183,20 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
         >
           Clear
         </button>
+        <div className="filter-pill-group" role="group" aria-label="Semester filter">
+          {['all', '1', '2'].map((option) => (
+            <button
+              key={option}
+              className={`pill-button filter-pill ${selectedSemester === option ? 'is-active' : ''}`}
+              onClick={() => setSelectedSemester(option)}
+            >
+              {option === 'all' ? 'All Semesters' : `Semester ${option}`}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {renderLegend()}
 
       {Object.keys(groupedModules).length === 0 ? (
         <div className="empty-state">No modules match your filters.</div>
@@ -161,17 +208,26 @@ const Year1_2 = ({ grades, updateGrade, getCurrentGrade, nextStep }) => {
               <div className="module-grid">
                 {groupModules.map((module) => {
                   const currentGrade = getCurrentGrade(module.moduleCode);
+                  const semesterValue = Number.isFinite(Number(module.semester)) ? Number(module.semester) : 1;
+                  const toneClassNames = toneClasses(module.year, semesterValue);
 
                   return (
                     <div
                       key={module.moduleCode}
-                      className={`module-card ${currentGrade ? 'is-selected' : ''}`}
+                      className={`module-card ${toneClassNames} ${currentGrade ? 'is-selected' : ''}`}
                     >
                       <div className="module-card__header">
                         <div>
                           <span className="code">{module.moduleCode}</span>
                           <p>{module.moduleName}</p>
                         </div>
+                        <div className="module-card__badges">
+                          <span className="module-badge">Year {module.year}</span>
+                          <span className="module-badge">Semester {semesterValue}</span>
+                        </div>
+                      </div>
+
+                      <div className="module-card__meta">
                         <span className="chip neutral">{module.credits} credits</span>
                       </div>
 
