@@ -140,7 +140,7 @@ const Year3_4 = ({
   if (!specialization) {
     return (
       <div className="empty-state">
-        <p>Please select a specialization first.</p>
+        <p>Please select a specialization first</p>
         <button onClick={prevStep} className="btn-primary">
           ← Go Back to Select Specialization
         </button>
