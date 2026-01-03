@@ -51,10 +51,12 @@ const Year3_4 = ({
     return modules.reduce((acc, module) => {
       const semesterValue = Number.isFinite(module.semester) ? module.semester : 1;
       const semesterLabel = `Semester ${semesterValue}`;
+
       if (!acc[semesterLabel]) {
-        acc[semesterLabel] = [];
+        acc[semesterLabel] = { modules: [], order: semesterValue };
       }
-      acc[semesterLabel].push(module);
+
+      acc[semesterLabel].modules.push(module);
       return acc;
     }, {});
   };
@@ -114,7 +116,8 @@ const Year3_4 = ({
 
   const renderGroupedModules = (modules, year) => {
     const groups = groupBySemester(modules);
-    const groupEntries = Object.entries(groups);
+    const groupEntries = Object.entries(groups)
+      .sort(([, groupA], [, groupB]) => groupA.order - groupB.order);
 
     if (!groupEntries.length) {
       return (
@@ -128,7 +131,7 @@ const Year3_4 = ({
       <div key={`${year}-${label}`} className="module-group animate-slide-up">
         <div className="module-group__title">Year {year} · {label}</div>
         <div className="module-grid">
-          {group.map((module) => renderModuleCard(module, year))}
+          {group.modules.map((module) => renderModuleCard(module, year))}
         </div>
       </div>
     ));

@@ -1,15 +1,11 @@
 const mongoose = require('mongoose');
 
 const SpecializationSchema = new mongoose.Schema({
-    name: {
+    specializationName: {
         type: String,
+        trim: true,
         required: true,
         unique: true,
-        trim: true
-    },
-    specializationNamme: {
-        type: String,
-        trim: true
     },
     specializationCode: {
         type: String,

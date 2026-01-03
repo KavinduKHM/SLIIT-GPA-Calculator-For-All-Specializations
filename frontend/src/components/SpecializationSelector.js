@@ -110,12 +110,12 @@ const SpecializationSelector = ({
         <div className="specialization-grid">
           {filteredSpecializations.map((spec) => {
             const code = spec.specializationCode || 'N/A';
-            const name = spec.name || spec.specializationNamme || 'Unnamed Specialization';
+            const name = spec.specializationName || 'Unnamed Specialization';
             const isSelected = specialization?.specializationCode === spec.specializationCode;
 
             return (
               <div
-                key={code}
+                key={name}
                 className={`specialization-card ${isSelected ? 'is-selected' : ''}`}
                 onClick={() => handleSelectSpecialization(spec)}
               >
