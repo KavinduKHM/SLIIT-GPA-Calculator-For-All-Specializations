@@ -29,8 +29,7 @@ const SpecializationSchema = new mongoose.Schema({
     year4Electives: {
         type: [String],
         default: []
-    },
-   
+    }
 });
 
 
