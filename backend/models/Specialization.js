@@ -30,14 +30,7 @@ const SpecializationSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
-    minCreditsYear3: {
-        type: Number,
-        default: 30
-    },
-    minCreditsYear4: {
-        type: Number,
-        default: 30
-    }
+   
 });
 
 
