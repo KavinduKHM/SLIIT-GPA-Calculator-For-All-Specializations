@@ -160,7 +160,8 @@ const Year3_4 = ({
 
     return groupEntries.map(([label, group]) => (
       <div key={`${year}-${label}`} className="module-group animate-slide-up">
-        <div className="module-group__title">Year {year} · {label}</div>
+        
+        <div className="module-group__title">Year {year} - Semester 1/2</div>
         <div className="module-grid">
           {group.modules.map((module) => renderModuleCard(module, year))}
         </div>
