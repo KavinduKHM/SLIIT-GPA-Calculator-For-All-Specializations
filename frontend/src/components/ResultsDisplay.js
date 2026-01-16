@@ -133,9 +133,8 @@ const ResultsDisplay = ({ grades, specialization, resetCalculator, prevStep }) =
       <div className="results-grid">
         <div className="results-card">
           <header>
-            <div className="icon success" />
             <div>
-              <h3>CGPA</h3>
+              <h2>CGPA 📊</h2>
               <span>Cumulative GPA</span>
             </div>
           </header>
@@ -144,9 +143,8 @@ const ResultsDisplay = ({ grades, specialization, resetCalculator, prevStep }) =
         </div>
         <div className="results-card">
           <header>
-            <div className="icon info" />
             <div>
-              <h3>WGPA</h3>
+              <h2>WGPA 🎓</h2>
               <span>Weighted GPA</span>
             </div>
           </header>
